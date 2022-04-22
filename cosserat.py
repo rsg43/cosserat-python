@@ -2,19 +2,24 @@ import numpy as np
 
 class CosseratRod:
 
-    def __init__(self, segments=10, L=10, m=1):
-        self.m = m
-        self.N = segements
-        self.L = L
+    def __init__(self, segments=10, seg_length=10, mass=1):
+        self.N = segments
+        self.l_0 = seg_length
+
         self.x = np.zeros((3,N+1))
         self.v = np.zeros((3,N+1))
         self.Q = [np.identity(3) for i in range(N)]
         self.w = np.zeros((3,N))
         self.kappa = np.zeros((3,N-1))
         self.sigma = np.zeros((3,N))
-        self.I = 0
-        self.B = 0
-        self.S = 0
+
+        self.m = mass * np.ones((1,N+1))
+        self.n[0] /= 2
+        self.n[N] /= 2
+
+        self.I = np.identity(np.array([]))
+        self.B = np.identity(np.array([]))
+        self.S = np.identity(np.array([]))
         
     def expm(u):
         pass
