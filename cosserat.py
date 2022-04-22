@@ -11,10 +11,8 @@ class CosseratRod:
 
         #Current coordinates, velocities, strains
         self.x = np.zeros((3,self.N+1))
-
         self.x[0,:] = np.array([i*self.l_0 for i in range(self.N+1)])
         self.x += np.array(position)
-
         self.v = np.zeros((3,self.N+1))
         self.Q = [np.identity(3) for i in range(self.N)]
         self.w = np.zeros((3,self.N))
@@ -29,10 +27,15 @@ class CosseratRod:
         self.B = np.diag(np.array([39000, 39000, 13000]))
         self.S = np.diag(np.array([16000, 16000, 34000]))
         
-    def expm(u):
-        pass
+    def expm(self,u):
+        theta = np.linalg.norm(u)
+        if theta > 0:
+            u /= theta
+            U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+            return np.identity(3) + np.sin(theta) * U + np.cos(theta) * U * U
+        return np.identity(3)
     
-    def logm(R):
+    def logm(self,R):
         pass
     
     def update_kappa(self):
@@ -65,3 +68,6 @@ filament = CosseratRod()
 print(filament.x)
 print(filament.Q)
 print(filament.B)
+print(filament.x[:,3])
+print(filament.expm(filament.x[:,0]))
+
