@@ -14,7 +14,7 @@ class CosseratRod:
         self.x[0,:] = np.array([i*self.l_0 for i in range(self.N+1)])
         self.x += np.array(position)
         self.v = np.zeros((3,self.N+1))
-        self.Q = [np.identity(3) for i in range(self.N)]
+        self.Q = np.tile(np.identity(3), self.N)
         self.w = np.zeros((3,self.N))
         self.kappa = np.zeros((3,self.N-1))
         self.sigma = np.zeros((3,self.N))
@@ -54,8 +54,8 @@ class CosseratRod:
         self.x = self.x + self.v * dt
         
     def update_Q(self, dt):
-        for i in range(self.N):
-            self.Q[i] = expm(self.w[i] * dt) * self.Q[i]
+        for ii in range(self.N):
+            self.Q[:,3*ii:3*(ii+1)] = np.einsum('ij,jk->ik', self.expm(self.w[:,ii] * dt), self.Q[:,3*ii:3*(ii+1)])
 
     def update_acceleration(self):
         pass
@@ -70,4 +70,6 @@ print(filament.Q)
 print(filament.B)
 print(filament.x[:,3])
 print(filament.expm(filament.x[:,0]))
+filament.update_Q(0.001)
+
 
