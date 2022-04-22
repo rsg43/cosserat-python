@@ -2,24 +2,32 @@ import numpy as np
 
 class CosseratRod:
 
-    def __init__(self, segments=10, seg_length=10, mass=1):
+    def __init__(self, segments=10, seg_length=10, position=[[0],[0],[0]]):
+        #Basic geometric properties
         self.N = segments
         self.l_0 = seg_length
+        self.A = 38.5
+        self.rho = 0.01
 
-        self.x = np.zeros((3,N+1))
-        self.v = np.zeros((3,N+1))
-        self.Q = [np.identity(3) for i in range(N)]
-        self.w = np.zeros((3,N))
-        self.kappa = np.zeros((3,N-1))
-        self.sigma = np.zeros((3,N))
+        #Current coordinates, velocities, strains
+        self.x = np.zeros((3,self.N+1))
 
-        self.m = mass * np.ones((1,N+1))
-        self.n[0] /= 2
-        self.n[N] /= 2
+        self.x[0,:] = np.array([i*self.l_0 for i in range(self.N+1)])
+        self.x += np.array(position)
 
-        self.I = np.identity(np.array([]))
-        self.B = np.identity(np.array([]))
-        self.S = np.identity(np.array([]))
+        self.v = np.zeros((3,self.N+1))
+        self.Q = [np.identity(3) for i in range(self.N)]
+        self.w = np.zeros((3,self.N))
+        self.kappa = np.zeros((3,self.N-1))
+        self.sigma = np.zeros((3,self.N))
+
+        #Mass, inertia, rigidities
+        self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
+        self.m[0,0] /= 2
+        self.m[0,self.N] /= 2
+        self.I = ((self.m[0,1] * self.A ** 2) / (4 * np.pi)) * np.diag(np.array([1,1,2]))
+        self.B = np.diag(np.array([39000, 39000, 13000]))
+        self.S = np.diag(np.array([16000, 16000, 34000]))
         
     def expm(u):
         pass
@@ -53,5 +61,7 @@ class CosseratRod:
         pass
 
 
-filament = CosseratRod
-print(filament)
+filament = CosseratRod()
+print(filament.x)
+print(filament.Q)
+print(filament.B)
