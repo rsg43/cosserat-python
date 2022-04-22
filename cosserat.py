@@ -34,8 +34,10 @@ class CosseratRod:
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
             return np.identity(3) + np.sin(theta) * U + np.cos(theta) * U * U
         return np.identity(3)
+        #Change this to act on a 3xN array of u values
     
     def logm(self,R):
+        #write this to act on 3x3N array of orientation bases
         pass
     
     def update_kappa(self):
@@ -56,9 +58,10 @@ class CosseratRod:
     def update_Q(self, dt):
         for ii in range(self.N):
             self.Q[:,3*ii:3*(ii+1)] = np.einsum('ij,jk->ik', self.expm(self.w[:,ii] * dt), self.Q[:,3*ii:3*(ii+1)])
+            #change this to be a broadcast einsum after amending expm
 
     def update_acceleration(self):
-        pass
+        return dvdt, dwdt
 
     def symplectic(self,timespan,dt,coeffs):
         pass
