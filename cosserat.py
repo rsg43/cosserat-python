@@ -1,6 +1,7 @@
 import numpy as np
 
-class Filament:
+class CosseratRod:
+
     def __init__(self, segments=10, L=10, m=1):
         self.m = m
         self.N = segements
@@ -46,3 +47,6 @@ class Filament:
     def symplectic(self,timespan,dt,coeffs):
         pass
 
+
+filament = CosseratRod
+print(filament)
