@@ -11,13 +11,19 @@ class CosseratRod:
 
         #Current coordinates, velocities, strains
         self.x = np.zeros((3,self.N+1))
-        self.x[0,:] = np.array([i*self.l_0 for i in range(self.N+1)])
+        self.x[2,:] = np.array([i*self.l_0 for i in range(self.N+1)])
         self.x += np.array(position)
         self.v = np.zeros((3,self.N+1))
-        self.Q = np.tile(np.identity(3), self.N)
+        # self.Q = np.tile(np.identity(3), self.N)
+        self.Q = np.zeros((3,3,self.N))
+        for ii in range(self.N):
+            self.Q[:,:,ii] = np.identity(3)
         self.w = np.zeros((3,self.N))
         self.kappa = np.zeros((3,self.N-1))
         self.sigma = np.zeros((3,self.N))
+        self.l = self.x[:,1:] - self.x[:,:self.N]
+        print(self.l)
+ 
 
         #Mass, inertia, rigidities
         self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
@@ -42,8 +48,10 @@ class CosseratRod:
         skew = np.array([[skew[1,2]],[skew[0,2]],[-skew[0,1]]]) 
         if abs(theta) > 1e-7:
             sin_term = 0.5 + (1.0/12.0) * theta ** 2 + (7.0/720.0) * theta ** 4 * (31.0/30240.0) * theta ** 6
+        elif abs(theta) > 0.0:
+            sin_term = theta / (2.0 * np.sin(theta))
         else:
-            sin_term = theta / (0.5 * np.sin(theta))
+            sin_term = 0.5
         return sin_term * skew
         #write this to act on 3x3N array of orientation bases
     
@@ -51,7 +59,7 @@ class CosseratRod:
         pass
 
     def update_sigma(self):
-        pass
+        self.sigma = np.einsum('ijk...,ik...->jk...',self.Q, self.l / self.l_0 - self.Q[2,:,:])  
 
     def update_v(self, dvdt, dt):
         self.v = self.v + dvdt * dt
@@ -63,9 +71,11 @@ class CosseratRod:
         self.x = self.x + self.v * dt
         
     def update_Q(self, dt):
+        temp_expm = np.zeros((3,3,self.N))
         for ii in range(self.N):
-            self.Q[:,3*ii:3*(ii+1)] = np.einsum('ij,jk->ik', self.expm(self.w[:,ii] * dt), self.Q[:,3*ii:3*(ii+1)])
-            #change this to be a broadcast einsum after amending expm
+            temp_expm[:,:,ii] = self.expm(self.w[:,ii] * dt)
+        #try to get rid of this for loop if possible
+        self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self):
         return dvdt, dwdt
@@ -81,6 +91,9 @@ print(filament.B)
 print(filament.x[:,3])
 print(filament.expm(filament.x[:,0]))
 filament.update_Q(0.001)
-filament.logm(filament.B)
+print(filament.logm(filament.Q[:,:,3]))
+# print(filament.sigma)
+# filament.update_sigma()
+# print(filament.sigma)
 
 
