@@ -11,6 +11,9 @@ class Filament:
         self.w = np.zeros((3,N))
         self.kappa = np.zeros((3,N-1))
         self.sigma = np.zeros((3,N))
+        self.I = 0
+        self.B = 0
+        self.S = 0
         
     def expm(u):
         pass
