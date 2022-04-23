@@ -2,10 +2,10 @@ from cosserat import CosseratRod
 import cProfile
 
 filament = CosseratRod()
-cProfile.run('filament.symplectic(timespan=100)')
+cProfile.run('filament.symplectic(timespan=10)')
 
 def logm_test():
-	for i in range(1000000):
+	for i in range(100000):
 		filament.logm(filament.Q[:,:,3])
 
 
