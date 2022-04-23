@@ -92,13 +92,13 @@ class CosseratRod:
             temp_expm[:,:,ii] = self.expm(self.w[:,ii] * dt)
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
-    def update_acceleration(self):
+    def update_acceleration(self,ext_F,ext_C):
         self.update_sigma()
         self.update_kappa()
 
         n_temp = np.einsum('ij,j...->j...', self.S, self.sigma)
-        Qn_temp = np.einsum('ijk,jk->ik',self.Q,n_temp) / self.e
-        dvdt = self.diff(Qn_temp) / self.m
+        Qn_temp = np.einsum('ijk,jk->ik',self.Q,n_temp) / self.e 
+        dvdt = (self.diff(Qn_temp) + ext_F) / self.m
 
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
         kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
@@ -108,13 +108,18 @@ class CosseratRod:
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
         dilatation_temp /= self.e
         #update this with correct dilatation term
-        dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp
+        dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
 
         return dvdt, dwdt
 
-    def symplectic(self,timespan=100,dt=0.01,method='PEFRL'):
+    def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None):
+        if ext_F == None:
+            ext_F = np.zeros((3,self.N+1))
+        if ext_C == None:
+            ext_C = np.zeros((3,self.N))
+
         if method == 'PEFRL':
             xi = 0.1786178958448091
             lmbda = -0.2123418310626054
@@ -133,7 +138,7 @@ class CosseratRod:
         numsteps = int(timespan / dt)
         for ii in range(numsteps):
             for jj in range(max(len(a),len(b))):
-                dvdt, dwdt = self.update_acceleration()
+                dvdt, dwdt = self.update_acceleration(ext_F,ext_C)
                 if a[jj] != 0:
                     self.update_v(dvdt, a[jj] * dt)
                     self.update_w(dwdt, a[jj] * dt)
