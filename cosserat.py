@@ -74,7 +74,7 @@ class CosseratRod:
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[2,:,:])  
+        self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[2,:,:])
 
     def update_v(self, dvdt, dt, dissipation=0):
         self.v = self.v * (1 - dissipation * dt) + dvdt * dt
@@ -94,7 +94,7 @@ class CosseratRod:
     def update_Q(self, dt):
         temp_expm = np.zeros((3,3,self.N))
         for ii in range(self.N):
-            temp_expm[:,:,ii] = self.expm(-self.w[:,ii], dt)
+            temp_expm[:,:,ii] = self.expm(self.w[:,ii], dt)
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self,ext_F,ext_C):
@@ -116,7 +116,6 @@ class CosseratRod:
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) / np.diag(self.I))
-
         return dvdt, dwdt
 
     def update_conditions(self,conditions):
