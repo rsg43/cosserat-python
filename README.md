@@ -9,3 +9,4 @@ Planned Functionality updates:
 - Clamped filament segments
 - Dynamically clamped segments
 - Cross-linked filaments
+- Volume exclusion
