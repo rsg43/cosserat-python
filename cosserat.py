@@ -37,50 +37,76 @@ class CosseratRod:
         self.S = np.diag(np.array([16000.0, 16000.0, 34000.0])) / 4.114
         
     def expm(self,u,theta):
+        #find norm of velocity vector u
         u_norm = np.linalg.norm(u)
+        #check to see if velocity is close to zero
         if u_norm > 1e-14:
+            #normalise velocity
             u /= u_norm
+            #apply ax operator to convert vector into antisym matrix
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+            #scale rotation angle by scalar velocity
             theta *= u_norm
+            #implement Rodrigues formula
             return np.identity(3) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
         else:
+            #if velocity is zero, no change in orientation
             return np.identity(3)
     
     def logm(self,R):
+        #find interval via trace of R matrix
         interval = 0.5 * (np.einsum('ii',R)-1.0)
+        #take arccos of interval to get angle 
         theta = np.arccos(interval - 1e-10)
+        #find different between R and R^T
         skew = R - np.einsum('ij->ji',R)
+        #apply skew operator to convert antisym matrix to vector
         skew = np.array([skew[2,1],-skew[2,0],skew[1,0]])
-        #check to see if this is correct
+        #conditionals to depending on value of angle
         if theta == 0:
+            #no difference in orientation implies no curvature
             sin_term = 0
         elif abs(theta) > 1e-10:
+            #analytic term for larg enough values
             sin_term = 0.5 * theta / (np.sin(theta))
         else:
+            #taylor expansion for small values
             sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
+        #return final vector term
         return sin_term * skew
     
     def diff(self,X):
+        #preallocate (3,1) vector of zeros 
         temp_zero = np.zeros((3,1))
+        #implement difference operator
         return np.concatenate((X,temp_zero),axis=1) - np.concatenate((temp_zero,X),axis=1)
 
     def quad(self,X):
+        #preallocate (3,1) vector of zeros
         temp_zero = np.zeros((3,1))
+        #implement quadrature operator
         return 0.5 * (np.concatenate((X,temp_zero),axis=1) + np.concatenate((temp_zero,X),axis=1))
 
     def update_kappa(self):
+        #calculate Q_i+1 * Q_i^T
         temp_R = np.einsum('ijk,ljk->ilk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
+        #loop over kappas
         for ii in range(self.N-1):
+            #calculate curvature between each segment
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
+        #implement sigma using einsum, equivalent to looped version
         self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[2,:,:])
 
     def update_v(self, dvdt, dt, dissipation=0):
+        #update filament linear velocity using dvdt, under dissipation
         self.v = self.v * (1 - dissipation * dt) + dvdt * dt
+        #update velocity of dilatation
         self.e_v = np.einsum('ij,ij->j',self.l,self.v[:,1:] - self.v[:,:self.N]) / (self.l_norm * self.l_0);
         
     def update_w(self, dwdt, dt, dissipation=0):
+        #update filament angular velocity using dvdt, under dissipation
         self.w = self.w * (1 - dissipation * dt) + dwdt * dt
 
     def update_x(self, dt):
