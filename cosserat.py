@@ -48,13 +48,13 @@ class CosseratRod:
     
     def logm(self,R):
         interval = 0.5 * (np.einsum('ii',R)-1.0)
-        theta = np.arccos(interval)
+        theta = np.arccos(interval - 1e-10)
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([skew[1,2],-skew[0,2],skew[0,1]])
+        skew = np.array([skew[2,1],-skew[2,0],skew[1,0]])
         #check to see if this is correct
         if theta == 0:
-            sin_term = 0.5
-        elif abs(theta) > 1e-7:
+            sin_term = 0
+        elif abs(theta) > 1e-10:
             sin_term = 0.5 * theta / (np.sin(theta))
         else:
             sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
@@ -74,7 +74,7 @@ class CosseratRod:
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[:,2,:])  
+        self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[2,:,:])  
 
     def update_v(self, dvdt, dt, dissipation=0):
         self.v = self.v * (1 - dissipation * dt) + dvdt * dt
@@ -116,7 +116,6 @@ class CosseratRod:
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) / np.diag(self.I))
-        # dwdt *= 0
 
         return dvdt, dwdt
 
