@@ -22,8 +22,13 @@ class CosseratRod:
         self.kappa = np.zeros((3,self.N-1))
         self.sigma = np.zeros((3,self.N))
         self.l = self.x[:,1:] - self.x[:,:self.N]
-        print(self.l)
- 
+        self.l_norm = np.linalg.norm(self.l,axis=0)
+        self.D_0 = 0.5 * (self.l_norm[1:] + self.l_norm[:self.N-1])
+        self.D = np.copy(self.D_0)
+        self.e = self.l / self.l_norm
+        self.ee = self.D / self.D_0
+
+        print(self.e,self.ee)
 
         #Mass, inertia, rigidities
         self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
@@ -45,7 +50,7 @@ class CosseratRod:
     def logm(self,R):
         theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([[skew[1,2]],[skew[0,2]],[-skew[0,1]]]) 
+        skew = np.array([skew[1,2],skew[0,2],-skew[0,1]]) 
         if abs(theta) > 1e-7:
             sin_term = 0.5 + (1.0/12.0) * theta ** 2 + (7.0/720.0) * theta ** 4 * (31.0/30240.0) * theta ** 6
         elif abs(theta) > 0.0:
@@ -56,7 +61,9 @@ class CosseratRod:
         #write this to act on 3x3N array of orientation bases
     
     def update_kappa(self):
-        pass
+        temp_R = np.einsum('ijk,ilk->jlk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
+        for ii in range(self.N-1):
+            self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
         self.sigma = np.einsum('ijk...,ik...->jk...',self.Q, self.l / self.l_0 - self.Q[2,:,:])  
@@ -85,15 +92,16 @@ class CosseratRod:
 
 
 filament = CosseratRod()
-print(filament.x)
-print(filament.Q)
-print(filament.B)
-print(filament.x[:,3])
-print(filament.expm(filament.x[:,0]))
-filament.update_Q(0.001)
-print(filament.logm(filament.Q[:,:,3]))
+# print(filament.x)
+# print(filament.Q)
+# print(filament.B)
+# print(filament.x[:,3])
+# print(filament.expm(filament.x[:,0]))
+# filament.update_Q(0.001)
+# print(filament.logm(filament.Q[:,:,3]))
 # print(filament.sigma)
 # filament.update_sigma()
 # print(filament.sigma)
+filament.update_kappa()
 
 
