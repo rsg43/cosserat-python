@@ -43,22 +43,19 @@ class CosseratRod:
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
             theta *= u_norm
             return np.identity(3) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
-        return np.identity(3)
+        else:
+            return np.identity(3)
     
     def logm(self,R):
-        theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
-        if (theta > 1) or (theta < -1):
-            if abs(theta-1) < 1e-10:
-                theta=1;
-            elif abs(theta+1) < 1e-10:
-                theta=-1;
+        interval = 0.5 * (np.einsum('ii',R)-1.0)
+        theta = np.arccos(interval)
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([skew[2,1],-skew[2,0],skew[1,2]])
+        skew = np.array([skew[1,2],-skew[0,2],skew[0,1]])
         #check to see if this is correct
         if theta == 0:
             sin_term = 0.5
         elif abs(theta) > 1e-7:
-            sin_term = theta / (2.0 * np.sin(theta))
+            sin_term = 0.5 * theta / (np.sin(theta))
         else:
             sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
         return sin_term * skew
@@ -72,12 +69,12 @@ class CosseratRod:
         return 0.5 * (np.concatenate((X,temp_zero),axis=1) + np.concatenate((temp_zero,X),axis=1))
 
     def update_kappa(self):
-        temp_R = np.einsum('jik,jlk->ilk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
+        temp_R = np.einsum('ijk,ljk->ilk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
         for ii in range(self.N-1):
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk,ik->jk', self.Q, self.l / self.l_0 - self.Q[:,2,:])  
+        self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[:,2,:])  
 
     def update_v(self, dvdt, dt, dissipation=0):
         self.v = self.v * (1 - dissipation * dt) + dvdt * dt
@@ -97,7 +94,7 @@ class CosseratRod:
     def update_Q(self, dt):
         temp_expm = np.zeros((3,3,self.N))
         for ii in range(self.N):
-            temp_expm[:,:,ii] = self.expm(self.w[:,ii], dt)
+            temp_expm[:,:,ii] = self.expm(-self.w[:,ii], dt)
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self,ext_F,ext_C):
@@ -105,12 +102,12 @@ class CosseratRod:
         self.update_kappa()
 
         n_temp = np.einsum('ij,j...->j...', self.S, self.sigma)
-        Qn_temp = np.einsum('ijk,jk->ik',self.Q,n_temp) / self.e 
+        Qn_temp = np.einsum('jik,jk->ik',self.Q,n_temp) / self.e 
         dvdt = (self.diff(Qn_temp) + ext_F) / self.m
 
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
         kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
-        shear_temp = np.einsum('jik,jk->ik', self.Q, self.l / self.l_norm)
+        shear_temp = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_norm)
         shear_temp = np.cross(shear_temp, n_temp, axisa=0, axisb=0, axisc=0) * self.l_0
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
