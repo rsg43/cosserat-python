@@ -40,14 +40,13 @@ class CosseratRod:
         if theta > 0.0:
             u /= theta
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
-            return np.identity(3) + np.sin(theta) * U + np.cos(theta) * U * U
+            return np.identity(3) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
         return np.identity(3)
     
     def logm(self,R):
-        # theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
-        theta = np.arccos(0.5 * (np.trace(R)-1.0))
+        theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([-skew[1,2],skew[0,2],-skew[0,1]])
+        skew = np.array([skew[2,1],-skew[2,0],skew[1,2]])
         #check to see if this is correct
         if theta == 0:
             sin_term = 0.5
@@ -73,7 +72,7 @@ class CosseratRod:
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk,ik->jk',self.Q, self.l / self.l_0 - self.Q[2,:,:])  
+        self.sigma = np.einsum('ijk,ik->jk',self.Q, self.l / self.l_0 - self.Q[:,2,:])  
 
     def update_v(self, dvdt, dt):
         self.v = self.v + dvdt * dt
@@ -105,15 +104,17 @@ class CosseratRod:
 
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
         kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
-        shear_temp = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_norm)
+        shear_temp = np.einsum('jik,jk->ik', self.Q, self.l / self.l_norm)
         shear_temp = np.cross(shear_temp, n_temp, axisa=0, axisb=0, axisc=0) * self.l_0
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
         dilatation_temp /= self.e
+        dilatation_temp *= 0
         #update this with correct dilatation term
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
+        dwdt *= 0
 
         return dvdt, dwdt
 
