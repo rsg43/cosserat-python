@@ -65,18 +65,19 @@ class CosseratRod:
         return 0.5 * (np.concatenate((X,temp_zero),axis=1) + np.concatenate((temp_zero,X),axis=1))
 
     def update_kappa(self):
-        temp_R = np.einsum('ijk,ilk->jlk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
+        temp_R = np.einsum('jik,jlk->ilk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
         for ii in range(self.N-1):
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
         self.sigma = np.einsum('ijk,ik->jk', self.Q, self.l / self.l_0 - self.Q[:,2,:])  
 
-    def update_v(self, dvdt, dt):
-        self.v = self.v + dvdt * dt
+    def update_v(self, dvdt, dt, dissipation=0):
+        self.v = self.v * (1 - dissipation * dt) + dvdt * dt
+        self.e_v = np.einsum('ij,ij->j',self.l,self.v[:,1:] - self.v[:,:self.N]) / (self.l_norm * self.l_0);
         
-    def update_w(self, dwdt, dt):
-        self.w = self.w + dwdt * dt
+    def update_w(self, dwdt, dt, dissipation=0):
+        self.w = self.w * (1 - dissipation * dt) + dwdt * dt
 
     def update_x(self, dt):
         self.x = self.x + self.v * dt
@@ -89,7 +90,7 @@ class CosseratRod:
     def update_Q(self, dt):
         temp_expm = np.zeros((3,3,self.N))
         for ii in range(self.N):
-            temp_expm[:,:,ii] = self.expm(self.w[:,ii] * dt)
+            temp_expm[:,:,ii] = self.expm(self.w[:,ii], dt)
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self,ext_F,ext_C):
@@ -106,15 +107,10 @@ class CosseratRod:
         shear_temp = np.cross(shear_temp, n_temp, axisa=0, axisb=0, axisc=0) * self.l_0
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
+        dilatation_temp *= self.e_v / self.e
 
-        l_v = self.v[:,1:] - self.v[:,:self.N]
-        e_v = np.einsum('ij,ij->j',self.l,l_v) / (self.l_norm * self.l_0);
-
-        dilatation_temp /= self.e
-        dilatation_temp *= 0
-        #update this with correct dilatation term
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
-        dwdt *= e_v / self.e
+        dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) / np.diag(self.I))
         # dwdt *= 0
 
