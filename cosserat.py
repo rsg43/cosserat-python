@@ -9,12 +9,11 @@ class CosseratRod:
         self.A = 38.5
         self.rho = 0.01
 
-        #Current coordinates, velocities, strains
+        #Current coordinates, velocities, strains, Voronoi, extensions
         self.x = np.zeros((3,self.N+1))
         self.x[2,:] = np.array([i*self.l_0 for i in range(self.N+1)])
         self.x += np.array(position)
         self.v = np.zeros((3,self.N+1))
-        # self.Q = np.tile(np.identity(3), self.N)
         self.Q = np.zeros((3,3,self.N))
         for ii in range(self.N):
             self.Q[:,:,ii] = np.identity(3)
@@ -25,10 +24,8 @@ class CosseratRod:
         self.l_norm = np.linalg.norm(self.l,axis=0)
         self.D_0 = 0.5 * (self.l_norm[1:] + self.l_norm[:self.N-1])
         self.D = np.copy(self.D_0)
-        self.e = self.l / self.l_norm
+        self.e = self.l_norm / self.l_0
         self.ee = self.D / self.D_0
-
-        print(self.e,self.ee)
 
         #Mass, inertia, rigidities
         self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
@@ -60,6 +57,14 @@ class CosseratRod:
         return sin_term * skew
         #write this to act on 3x3N array of orientation bases
     
+    def diff(self,X):
+        temp_zero = np.zeros((3,1))
+        return np.concatenate((X,temp_zero),axis=1) - np.concatenate((temp_zero,X),axis=1)
+
+    def quad(self,X):
+        temp_zero = np.zeros((3,1))
+        return 0.5 * (np.concatenate((X,temp_zero),axis=1) + np.concatenate((temp_zero,X),axis=1))
+
     def update_kappa(self):
         temp_R = np.einsum('ijk,ilk->jlk',self.Q[:,:,1:], self.Q[:,:,:self.N-1])
         for ii in range(self.N-1):
@@ -76,6 +81,11 @@ class CosseratRod:
 
     def update_x(self, dt):
         self.x = self.x + self.v * dt
+        self.l = self.x[:,1:] - self.x[:,:self.N]
+        self.l_norm = np.linalg.norm(self.l,axis=0)
+        self.D = 0.5 * (self.l_norm[1:] + self.l_norm[:self.N-1])
+        self.e = self.l_norm / self.l_0
+        self.ee = self.D / self.D_0
         
     def update_Q(self, dt):
         temp_expm = np.zeros((3,3,self.N))
@@ -85,6 +95,14 @@ class CosseratRod:
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self):
+        self.update_sigma()
+        self.update_kappa()
+
+        n_temp = np.einsum('ij,j...->j...', self.S, self.sigma)
+        Qn_temp = np.einsum('ijk,jk...->ik',self.Q,n_temp) / self.e
+        dvdt = self.diff(Qn_temp) / self.m
+
+        tau_temp = np.einsum('ij,j...->j...', self.B, self.kappa) / np.power(self.ee,3)
         return dvdt, dwdt
 
     def symplectic(self,timespan,dt,coeffs):
@@ -103,5 +121,7 @@ filament = CosseratRod()
 # filament.update_sigma()
 # print(filament.sigma)
 filament.update_kappa()
+filament.update_acceleration()
+
 
 
