@@ -130,7 +130,7 @@ class CosseratRod:
             self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
             self.w[:,self.N] = np.zeros((3,))
 
-    def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,conditions=[]):
+    def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,dissipation=0,conditions=[]):
         #Check to see if there are any external forces acting on filament, else use zero arrays
         if isinstance(ext_F,np.ndarray) == False:
             ext_F = np.zeros((3,self.N+1))
@@ -159,8 +159,8 @@ class CosseratRod:
             for jj in range(max(len(a),len(b))):
                 dvdt, dwdt = self.update_acceleration(ext_F,ext_C)
                 if a[jj] != 0:
-                    self.update_v(dvdt, a[jj] * dt)
-                    self.update_w(dwdt, a[jj] * dt)
+                    self.update_v(dvdt, a[jj] * dt, dissipation)
+                    self.update_w(dwdt, a[jj] * dt, dissipation)
                     self.update_conditions(conditions)
                 if jj < len(b):
                     self.update_x(b[jj] * dt)
