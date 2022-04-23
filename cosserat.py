@@ -49,11 +49,9 @@ class CosseratRod:
         skew = R - np.einsum('ij->ji',R)
         skew = np.array([skew[1,2],skew[0,2],-skew[0,1]]) 
         if abs(theta) > 1e-7:
-            sin_term = 0.5 + (1.0/12.0) * theta ** 2 + (7.0/720.0) * theta ** 4 * (31.0/30240.0) * theta ** 6
-        elif abs(theta) > 0.0:
             sin_term = theta / (2.0 * np.sin(theta))
         else:
-            sin_term = 0.5
+            sin_term = 0.5 + (1.0/12.0) * theta ** 2 + (7.0/720.0) * theta ** 4 * (31.0/30240.0) * theta ** 6
         return sin_term * skew
     
     def diff(self,X):
