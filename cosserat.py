@@ -9,7 +9,7 @@ class CosseratRod:
         self.A = 38.5
         self.rho = 0.01
 
-        #Current coordinates, velocities, strains, Voronoi, extensions
+        #Current coordinates, velocities, strains, Voronoi, extensions,accelerations
         self.x = np.zeros((3,self.N+1))
         self.x[2,:] = np.array([i*self.l_0 for i in range(self.N+1)])
         self.x += np.array(position)
@@ -27,6 +27,8 @@ class CosseratRod:
         self.e = self.l_norm / self.l_0
         self.ee = self.D / self.D_0
         self.e_v = np.einsum('ij,ij->j',self.l,self.v[:,1:] - self.v[:,:self.N]) / (self.l_norm * self.l_0);
+        self.dvdt = np.zeros((3,self.N+1))
+        self.dwdt = np.zeros((3,self.N))
 
         #Mass, inertia, rigidities
         self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
@@ -36,7 +38,8 @@ class CosseratRod:
         self.B = np.diag(np.array([39000.0, 39000.0, 13000.0])) / 4.114
         self.S = np.diag(np.array([16000.0, 16000.0, 34000.0])) / 4.114
         
-    def expm(self,u,theta):
+    def expm(self,w,theta):
+        u = np.copy(w)
         #find norm of velocity vector u
         u_norm = np.linalg.norm(u)
         #check to see if velocity is close to zero
@@ -53,7 +56,8 @@ class CosseratRod:
             #if velocity is zero, no change in orientation
             return np.identity(3)
     
-    def logm(self,R):
+    def logm(self,RR):
+        R = np.copy(RR)
         #find interval via trace of R matrix
         interval = 0.5 * (np.einsum('ii',R)-1.0)
         #take arccos of interval to get angle 
@@ -99,15 +103,15 @@ class CosseratRod:
         #implement sigma using einsum, equivalent to looped version
         self.sigma = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_0 - self.Q[2,:,:])
 
-    def update_v(self, dvdt, dt, dissipation=0):
+    def update_v(self, dt, dissipation=0):
         #update filament linear velocity using dvdt, under dissipation
-        self.v = self.v * (1 - dissipation * dt) + dvdt * dt
+        self.v = self.v * (1 - dissipation * dt) + self.dvdt * dt
         #update velocity of dilatation
         self.e_v = np.einsum('ij,ij->j',self.l,self.v[:,1:] - self.v[:,:self.N]) / (self.l_norm * self.l_0);
         
-    def update_w(self, dwdt, dt, dissipation=0):
+    def update_w(self, dt, dissipation=0):
         #update filament angular velocity using dvdt, under dissipation
-        self.w = self.w * (1 - dissipation * dt) + dwdt * dt
+        self.w = self.w * (1 - dissipation * dt) + self.dwdt * dt
 
     def update_x(self, dt):
         #update position
@@ -142,7 +146,7 @@ class CosseratRod:
         #take strain to laboratory frame
         Qn_temp = np.einsum('jik,jk->ik',self.Q,n_temp) / self.e 
         #update dvdt
-        dvdt = (self.diff(Qn_temp) + ext_F) / self.m
+        self.dvdt = (self.diff(Qn_temp) + ext_F) / self.m
         #calculate bend/twist strain
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
         kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
@@ -156,10 +160,8 @@ class CosseratRod:
         #calculate dilatation term
         dilatation_temp *= self.e_v / self.e
         #update dwdt
-        dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
-        dwdt *= np.tile(self.e,(3,1)) / np.einsum('ij->ji',np.tile(np.diag(self.I),(10,1)))
-        #return accelerations
-        return dvdt, dwdt
+        self.dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
+        self.dwdt *= np.tile(self.e,(3,1)) / np.einsum('ij->ji',np.tile(np.diag(self.I),(10,1)))
 
     def update_conditions(self,conditions):
         #no conditions set
@@ -209,10 +211,10 @@ class CosseratRod:
                 #check to see if there is a first velocity step
                 if a[jj] != 0:
                     #update accelerations
-                    dvdt, dwdt = self.update_acceleration(ext_F,ext_C)
+                    self.update_acceleration(ext_F,ext_C)
                     #update velocities
-                    self.update_v(dvdt, a[jj] * dt, dissipation)
-                    self.update_w(dwdt, a[jj] * dt, dissipation)
+                    self.update_v(a[jj] * dt, dissipation)
+                    self.update_w(a[jj] * dt, dissipation)
                     #enforce boundary conditions
                     self.update_conditions(conditions)
                 #check to see if there is a final position step
@@ -220,4 +222,5 @@ class CosseratRod:
                     #update positions and orientations
                     self.update_x(b[jj] * dt)
                     self.update_Q(b[jj] * dt)
+
 
