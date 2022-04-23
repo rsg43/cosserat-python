@@ -119,10 +119,10 @@ class CosseratRod:
             return
         if 'clamp_0' in conditions:
             self.v[:,0:2] = np.zeros((3,2))
-            self.w[:,0] = np.zeros((3,1))
+            self.w[:,0] = np.zeros((3,))
         if 'clamp_N' in conditions:
             self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
-            self.w[:,self.N] = np.zeros((3,1))
+            self.w[:,self.N] = np.zeros((3,))
 
     def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,conditions=[]):
         #Check to see if there are any external forces acting on filament, else use zero arrays
