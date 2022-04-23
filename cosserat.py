@@ -71,7 +71,7 @@ class CosseratRod:
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk...,ik...->jk...',self.Q, self.l / self.l_0 - self.Q[2,:,:])  
+        self.sigma = np.einsum('ijk,ik->jk',self.Q, self.l / self.l_0 - self.Q[2,:,:])  
 
     def update_v(self, dvdt, dt):
         self.v = self.v + dvdt * dt
@@ -99,10 +99,22 @@ class CosseratRod:
         self.update_kappa()
 
         n_temp = np.einsum('ij,j...->j...', self.S, self.sigma)
-        Qn_temp = np.einsum('ijk,jk...->ik',self.Q,n_temp) / self.e
+        Qn_temp = np.einsum('ijk,jk->ik',self.Q,n_temp) / self.e
         dvdt = self.diff(Qn_temp) / self.m
 
-        tau_temp = np.einsum('ij,j...->j...', self.B, self.kappa) / np.power(self.ee,3)
+        tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
+        kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
+        shear_temp = np.einsum('ijk,jk->ik', self.Q, self.l / self.l_norm)
+        shear_temp = np.cross(shear_temp, n_temp, axisa=0, axisb=0, axisc=0) * self.l_0
+        dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
+        rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
+        dilatation_temp /= self.e
+
+        dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp
+        dwdt *= self.e
+        dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
+
+
         return dvdt, dwdt
 
     def symplectic(self,timespan,dt,coeffs):
@@ -121,7 +133,7 @@ filament = CosseratRod()
 # filament.update_sigma()
 # print(filament.sigma)
 filament.update_kappa()
-filament.update_acceleration()
+print(filament.update_acceleration())
 
 
 
