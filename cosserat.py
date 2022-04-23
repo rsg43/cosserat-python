@@ -77,7 +77,7 @@ class CosseratRod:
             #taylor expansion for small values
             sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
         #return final vector term
-        return sin_term * skew
+        return -sin_term * skew
     
     def diff(self,X):
         #preallocate (3,1) vector of zeros 
@@ -133,7 +133,7 @@ class CosseratRod:
         #loop over orientation bases
         for ii in range(self.N):
             #calculate rotation matrices using expm
-            temp_expm[:,:,ii] = self.expm(self.w[:,ii], dt)
+            temp_expm[:,:,ii] = self.expm(-self.w[:,ii], dt)
         #update orientations using rotation matrices
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
