@@ -26,25 +26,32 @@ class CosseratRod:
         self.D = np.copy(self.D_0)
         self.e = self.l_norm / self.l_0
         self.ee = self.D / self.D_0
+        self.e_v = np.einsum('ij,ij->j',self.l,self.v[:,1:] - self.v[:,:self.N]) / (self.l_norm * self.l_0);
 
         #Mass, inertia, rigidities
         self.m = (seg_length * self.A * self.rho) * np.ones((1,self.N+1))
         self.m[0,0] *= 0.5
         self.m[0,self.N] *= 0.5
         self.I = ((self.m[0,1] * self.A ** 2) / (4 * np.pi)) * np.diag(np.array([1.0,1.0,2.0]))
-        self.B = np.diag(np.array([39000.0, 39000.0, 13000.0]))
-        self.S = np.diag(np.array([16000.0, 16000.0, 34000.0]))
+        self.B = np.diag(np.array([39000.0, 39000.0, 13000.0])) / 4.114
+        self.S = np.diag(np.array([16000.0, 16000.0, 34000.0])) / 4.114
         
-    def expm(self,u):
-        theta = np.linalg.norm(u)
-        if theta > 0.0:
-            u /= theta
+    def expm(self,u,theta):
+        u_norm = np.linalg.norm(u)
+        if u_norm > 1e-14:
+            u /= u_norm
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
+            theta *= u_norm
             return np.identity(3) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
         return np.identity(3)
     
     def logm(self,R):
         theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
+        if (theta > 1) or (theta < -1):
+            if abs(theta-1) < 1e-10:
+                theta=1;
+            elif abs(theta+1) < 1e-10:
+                theta=-1;
         skew = R - np.einsum('ij->ji',R)
         skew = np.array([skew[2,1],-skew[2,0],skew[1,2]])
         #check to see if this is correct
