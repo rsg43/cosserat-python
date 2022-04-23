@@ -50,12 +50,10 @@ class CosseratRod:
         #check to see if this is correct
         if theta == 0:
             sin_term = 0.5
-        else:
+        elif abs(theta) > 1e-7:
             sin_term = theta / (2.0 * np.sin(theta))
-        # elif abs(theta) > 1e-7:
-            # sin_term = theta / (2.0 * np.sin(theta))
-        # else:
-            # sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
+        else:
+            sin_term = 0.5 + (1.0/12.0) * (theta ** 2) + (7.0/720.0) * (theta ** 4) * (31.0/30240.0) * (theta ** 6)
         return sin_term * skew
     
     def diff(self,X):
