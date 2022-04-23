@@ -42,7 +42,6 @@ class CosseratRod:
             U = np.array([[0,-u[2],u[1]],[u[2],0,-u[0]],[-u[1],u[0],0]])
             return np.identity(3) + np.sin(theta) * U + np.cos(theta) * U * U
         return np.identity(3)
-        #Change this to act on a 3xN array of u values
     
     def logm(self,R):
         theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
@@ -55,7 +54,6 @@ class CosseratRod:
         else:
             sin_term = 0.5
         return sin_term * skew
-        #write this to act on 3x3N array of orientation bases
     
     def diff(self,X):
         temp_zero = np.zeros((3,1))
@@ -91,7 +89,6 @@ class CosseratRod:
         temp_expm = np.zeros((3,3,self.N))
         for ii in range(self.N):
             temp_expm[:,:,ii] = self.expm(self.w[:,ii] * dt)
-        #try to get rid of this for loop if possible
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self):
@@ -109,16 +106,20 @@ class CosseratRod:
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
         dilatation_temp /= self.e
-
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
 
-
         return dvdt, dwdt
 
-    def symplectic(self,timespan,dt,coeffs):
-        pass
+    def symplectic(self,timespan=10,dt=0.01,coeffs=0):
+        numsteps = int(timespan / dt)
+        for i in range(numsteps):
+            self.update_x(dt)
+            self.update_Q(dt)
+            dvdt, dwdt = self.update_acceleration()
+            self.update_v(dvdt,dt)
+            self.update_w(dwdt,dt)
 
 
 filament = CosseratRod()
@@ -132,8 +133,9 @@ filament = CosseratRod()
 # print(filament.sigma)
 # filament.update_sigma()
 # print(filament.sigma)
-filament.update_kappa()
-print(filament.update_acceleration())
+# filament.update_kappa()
+# print(filament.update_acceleration())
+filament.symplectic()
 
 
 
