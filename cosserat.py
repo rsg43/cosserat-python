@@ -114,12 +114,24 @@ class CosseratRod:
 
         return dvdt, dwdt
 
-    def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None):
+    def update_conditions(self,conditions):
+        if conditions == []:
+            return
+        if 'clamp_0' in conditions:
+            self.v[:,0:2] = np.zeros((3,2))
+            self.w[:,0] = np.zeros((3,1))
+        if 'clamp_N' in conditions:
+            self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
+            self.w[:,self.N] = np.zeros((3,1))
+
+    def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,conditions=[]):
+        #Check to see if there are any external forces acting on filament, else use zero arrays
         if ext_F == None:
             ext_F = np.zeros((3,self.N+1))
         if ext_C == None:
             ext_C = np.zeros((3,self.N))
 
+        #Set integrating method    
         if method == 'PEFRL':
             xi = 0.1786178958448091
             lmbda = -0.2123418310626054
@@ -135,6 +147,7 @@ class CosseratRod:
         else:
             raise ValueError('Incompatible integrator specified')
 
+        #Run simulation loop
         numsteps = int(timespan / dt)
         for ii in range(numsteps):
             for jj in range(max(len(a),len(b))):
@@ -142,6 +155,7 @@ class CosseratRod:
                 if a[jj] != 0:
                     self.update_v(dvdt, a[jj] * dt)
                     self.update_w(dwdt, a[jj] * dt)
+                    self.update_conditions(conditions)
                 if jj < len(b):
                     self.update_x(b[jj] * dt)
                     self.update_Q(b[jj] * dt)
