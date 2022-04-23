@@ -46,7 +46,8 @@ class CosseratRod:
     def logm(self,R):
         theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([skew[1,2],skew[0,2],-skew[0,1]])
+        skew = np.array([-skew[1,2],skew[0,2],-skew[0,1]])
+        #check to see if this is correct
         if theta == 0:
             sin_term = 0.5 
         elif abs(theta) > 1e-7:
@@ -106,6 +107,7 @@ class CosseratRod:
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
         dilatation_temp /= self.e
+        #update this with correct dilatation term
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp
         dwdt *= self.e
         dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
