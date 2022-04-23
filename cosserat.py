@@ -112,14 +112,33 @@ class CosseratRod:
 
         return dvdt, dwdt
 
-    def symplectic(self,timespan=10,dt=0.01,coeffs=0):
+    def symplectic(self,timespan=10,dt=0.01,method='PEFRL'):
+        if method == 'PEFRL':
+            xi = 0.1786178958448091
+            lmbda = -0.2123418310626054
+            chi = -0.06626458266981849
+            a = np.array([xi,chi,1-2*(xi+chi),chi,xi])
+            b = np.array([0.5*(1-2*lmbda),lmbda,lmbda,0.5*(1-2*lmbda)])
+        elif method == 'VV':
+            a = np.array([0.5,0.5])
+            b = np.array([1])
+        elif method == 'PV':
+            a = np.array([0,1])
+            b = np.array([0.5,0.5])
+        else:
+            raise ValueError('Incompatible integrator specified')
+
         numsteps = int(timespan / dt)
-        for i in range(numsteps):
-            self.update_x(dt)
-            self.update_Q(dt)
-            dvdt, dwdt = self.update_acceleration()
-            self.update_v(dvdt,dt)
-            self.update_w(dwdt,dt)
+        for ii in range(numsteps):
+            for jj in range(max(len(a),len(b))):
+                dvdt, dwdt = self.update_acceleration()
+                if a[jj] != 0:
+                    self.update_v(dvdt, a[jj] * dt)
+                    self.update_w(dwdt, a[jj] * dt)
+                if jj < len(b):
+                    self.update_x(b[jj] * dt)
+                    self.update_Q(b[jj] * dt)
+            
 
 
 filament = CosseratRod()
@@ -136,6 +155,7 @@ filament = CosseratRod()
 # filament.update_kappa()
 # print(filament.update_acceleration())
 filament.symplectic()
+print(filament.x)
 
 
 
