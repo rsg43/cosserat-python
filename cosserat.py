@@ -72,7 +72,7 @@ class CosseratRod:
             self.kappa[:,ii] = self.logm(temp_R[:,:,ii]) / self.D_0[ii]
 
     def update_sigma(self):
-        self.sigma = np.einsum('ijk,ik->jk',self.Q, self.l / self.l_0 - self.Q[:,2,:])  
+        self.sigma = np.einsum('ijk,ik->jk', self.Q, self.l / self.l_0 - self.Q[:,2,:])  
 
     def update_v(self, dvdt, dt):
         self.v = self.v + dvdt * dt
@@ -108,13 +108,17 @@ class CosseratRod:
         shear_temp = np.cross(shear_temp, n_temp, axisa=0, axisb=0, axisc=0) * self.l_0
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
+
+        l_v = self.v[:,1:] - self.v[:,:self.N]
+        e_v = np.einsum('ij,ij->j',self.l,l_v) / (self.l_norm * self.l_0);
+
         dilatation_temp /= self.e
         dilatation_temp *= 0
         #update this with correct dilatation term
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
-        dwdt *= self.e
-        dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) * np.diag(self.I))
-        dwdt *= 0
+        dwdt *= e_v / self.e
+        dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) / np.diag(self.I))
+        # dwdt *= 0
 
         return dvdt, dwdt
 
@@ -163,5 +167,4 @@ class CosseratRod:
                 if jj < len(b):
                     self.update_x(b[jj] * dt)
                     self.update_Q(b[jj] * dt)
-
 
