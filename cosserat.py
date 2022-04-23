@@ -47,8 +47,10 @@ class CosseratRod:
     def logm(self,R):
         theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0))
         skew = R - np.einsum('ij->ji',R)
-        skew = np.array([skew[1,2],skew[0,2],-skew[0,1]]) 
-        if abs(theta) > 1e-7:
+        skew = np.array([skew[1,2],skew[0,2],-skew[0,1]])
+        if theta == 0:
+            sin_term = 0.5 
+        elif abs(theta) > 1e-7:
             sin_term = theta / (2.0 * np.sin(theta))
         else:
             sin_term = 0.5 + (1.0/12.0) * theta ** 2 + (7.0/720.0) * theta ** 4 * (31.0/30240.0) * theta ** 6
