@@ -1,5 +1,4 @@
 import numpy as np
-import cProfile
 
 class CosseratRod:
 
@@ -142,7 +141,7 @@ class CosseratRod:
             
 
 
-filament = CosseratRod()
+# filament = CosseratRod()
 # print(filament.x)
 # print(filament.Q)
 # print(filament.B)
@@ -158,7 +157,6 @@ filament = CosseratRod()
 # filament.symplectic()
 # print(filament.x)
 
-cProfile.run('filament.symplectic()')
 
 
 
