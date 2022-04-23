@@ -126,9 +126,9 @@ class CosseratRod:
 
     def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,conditions=[]):
         #Check to see if there are any external forces acting on filament, else use zero arrays
-        if ext_F == None:
+        if isinstance(ext_F,np.ndarray) == False:
             ext_F = np.zeros((3,self.N+1))
-        if ext_C == None:
+        if isinstance(ext_C,np.ndarray) == False:
             ext_C = np.zeros((3,self.N))
 
         #Set integrating method    
