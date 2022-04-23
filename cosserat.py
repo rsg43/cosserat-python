@@ -112,10 +112,9 @@ class CosseratRod:
         dilatation_temp = np.einsum('ij,j...->i...',self.I,self.w) / self.e
         rigid_temp = np.cross(dilatation_temp, self.w, axisa=0, axisb=0, axisc=0)
         dilatation_temp *= self.e_v / self.e
-
         dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
-        dwdt *= self.e
-        dwdt = np.einsum('ij->ji',np.einsum('ij->ji', dwdt) / np.diag(self.I))
+        dwdt *= np.tile(self.e,(3,1)) / np.einsum('ij->ji',np.tile(np.diag(self.I),(10,1)))
+
         return dvdt, dwdt
 
     def update_conditions(self,conditions):
