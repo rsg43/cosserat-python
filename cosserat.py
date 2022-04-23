@@ -155,8 +155,8 @@ class CosseratRod:
         numsteps = int(timespan / dt)
         for ii in range(numsteps):
             for jj in range(max(len(a),len(b))):
-                dvdt, dwdt = self.update_acceleration(ext_F,ext_C)
                 if a[jj] != 0:
+                    dvdt, dwdt = self.update_acceleration(ext_F,ext_C)
                     self.update_v(dvdt, a[jj] * dt, dissipation)
                     self.update_w(dwdt, a[jj] * dt, dissipation)
                     self.update_conditions(conditions)
