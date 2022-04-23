@@ -1,4 +1,5 @@
 import numpy as np
+import cProfile
 
 class CosseratRod:
 
@@ -112,7 +113,7 @@ class CosseratRod:
 
         return dvdt, dwdt
 
-    def symplectic(self,timespan=10,dt=0.01,method='PEFRL'):
+    def symplectic(self,timespan=100,dt=0.01,method='PEFRL'):
         if method == 'PEFRL':
             xi = 0.1786178958448091
             lmbda = -0.2123418310626054
@@ -154,8 +155,10 @@ filament = CosseratRod()
 # print(filament.sigma)
 # filament.update_kappa()
 # print(filament.update_acceleration())
-filament.symplectic()
-print(filament.x)
+# filament.symplectic()
+# print(filament.x)
+
+cProfile.run('filament.symplectic()')
 
 
 
