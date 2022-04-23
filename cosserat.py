@@ -110,25 +110,38 @@ class CosseratRod:
         self.w = self.w * (1 - dissipation * dt) + dwdt * dt
 
     def update_x(self, dt):
+        #update position
         self.x = self.x + self.v * dt
+        #update segment length vector
         self.l = self.x[:,1:] - self.x[:,:self.N]
+        #calculate current segment length
         self.l_norm = np.linalg.norm(self.l,axis=0)
+        #calculate current Voronoi region length
         self.D = 0.5 * (self.l_norm[1:] + self.l_norm[:self.N-1])
+        #calculate segment extension
         self.e = self.l_norm / self.l_0
+        #calculate Voronoi extension
         self.ee = self.D / self.D_0
         
     def update_Q(self, dt):
+        #preallocate rotation matrices
         temp_expm = np.zeros((3,3,self.N))
+        #loop over orientation bases
         for ii in range(self.N):
+            #calculate rotation matrices using expm
             temp_expm[:,:,ii] = self.expm(self.w[:,ii], dt)
+        #update orientations using rotation matrices
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
     def update_acceleration(self,ext_F,ext_C):
+        #update sigma and kappa
         self.update_sigma()
         self.update_kappa()
-
+        #calculate internal strain
         n_temp = np.einsum('ij,j...->j...', self.S, self.sigma)
+        #take strain to laboratory frame
         Qn_temp = np.einsum('jik,jk->ik',self.Q,n_temp) / self.e 
+        #update dvdt
         dvdt = (self.diff(Qn_temp) + ext_F) / self.m
 
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
