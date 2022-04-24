@@ -6,9 +6,9 @@ Only package dependency for main class is numpy, with remaining functions and op
 Completed Functionality updates:
 - External forces
 - Clamped filament segments
+- Dynamically clamped segments
 
 Planned Functionality updates:
 - Visualisation code
-- Dynamically clamped segments
 - Cross-linked filaments
 - Volume exclusion
