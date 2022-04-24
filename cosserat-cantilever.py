@@ -6,6 +6,7 @@ import numpy as np
 np.set_printoptions(precision=3)
 #intialise Cosserat filament 
 filament = CosseratRod()
+#initialise plotter class
 plotter = CosseratVisualisation(filament)
 #preallocate external force array
 ext_F=np.zeros((3,filament.N+1))
@@ -16,5 +17,5 @@ filament.symplectic(timespan=100,conditions=['clamp_0'],ext_F=ext_F,dissipation=
 #print position of filament after simulation
 print(filament.x)
 print('====x=====')
-
+#make simple lineplot of filament centreline
 plotter.simple_lineplot()
