@@ -181,22 +181,22 @@ class CosseratRod:
         if 'comp_clamp_0' in conditions:
             self.v[:,:2] = np.zeros((3,2))
             if ii < numsteps // 10:
-                self.v[2,:2] += 2.0 * 10 / (numsteps * dt)
+                self.v[2,:2] += 2.5 * 10 / (numsteps * dt)
         #compressed and clamped at N end
         if 'comp_clamp_N' in conditions:
             self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
             if ii < numsteps // 10:
-                self.v[2,self.N-1:self.N+1] += -2.0 * 10 / (numsteps * dt)
+                self.v[2,self.N-1:self.N+1] += -2.5 * 10 / (numsteps * dt)
         #twisted and clamped at 0 end
         if 'twist_clamp_0' in conditions:
             self.w[:,0] = np.zeros((3,))
             if ii < numsteps // 10:
-                self.w[2,0] += 1.0 * 10 / (numsteps * dt)
+                self.w[2,0] += 4.0 * 10 / (numsteps * dt)
         #twisted and clamped at N end
         if 'twist_clamp_N' in conditions:
             self.w[:,self.N-1] = np.zeros((3,))
             if ii < numsteps // 10:
-                self.w[2,self.N-1] += -1.0 * 10 / (numsteps * dt)
+                self.w[2,self.N-1] += -4.0 * 10 / (numsteps * dt)
         #add noise to simulations
         if 'noise_no_ext' in conditions:
             force_scale = 0.01
