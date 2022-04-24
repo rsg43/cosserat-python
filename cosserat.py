@@ -161,7 +161,7 @@ class CosseratRod:
         self.dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
         self.dwdt *= np.tile(self.e,(3,1)) / np.einsum('ij->ji',np.tile(np.diag(self.I),(10,1)))
 
-    def update_conditions(self,conditions,numsteps,ii):
+    def update_conditions(self,conditions,numsteps,ii,dt):
         #no conditions set
         if conditions == []:
             return
@@ -172,27 +172,27 @@ class CosseratRod:
         #clamped at N end
         if 'clamp_N' in conditions:
             self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
-            self.w[:,self.N] = np.zeros((3,))
+            self.w[:,self.N-1] = np.zeros((3,))
         #compressed and clamped at 0 end
         if 'comp_clamp_0' in conditions:
             self.v[:,:2] = np.zeros((3,2))
             if ii < numsteps // 10:
-                self.v[2,:2] += 2.0 * 10 / numsteps
+                self.v[2,:2] += 2.0 * 10 / (numsteps * dt)
         #compressed and clamped at N end
         if 'comp_clamp_N' in conditions:
             self.v[:,self.N-1:self.N+1] = np.zeros((3,2))
             if ii < numsteps // 10:
-                self.v[2,self.N-1:self.N+1] += -2.0 * 10 / numsteps
+                self.v[2,self.N-1:self.N+1] += -2.0 * 10 / (numsteps * dt)
         #twisted and clamped at 0 end
         if 'twist_clamp_0' in conditions:
-            self.w[:,0] = np.zeros((3,2))
+            self.w[:,0] = np.zeros((3,))
             if ii < numsteps // 10:
-                self.w[2,0] += 1.0 * 10 / numsteps
+                self.w[2,0] += 1.0 * 10 / (numsteps * dt)
         #twisted and clamped at N end
         if 'twist_clamp_N' in conditions:
-            self.w[:,self.N] = np.zeros((3,2))
+            self.w[:,self.N-1] = np.zeros((3,))
             if ii < numsteps // 10:
-                self.w[2,self.N] += -1.0 * 10 / numsteps
+                self.w[2,self.N-1] += -1.0 * 10 / (numsteps * dt)
 
 
     def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,dissipation=0,conditions=[]):
@@ -235,7 +235,7 @@ class CosseratRod:
                     self.update_v(a[jj] * dt, dissipation)
                     self.update_w(a[jj] * dt, dissipation)
                     #enforce boundary conditions
-                    self.update_conditions(conditions,numsteps,ii)
+                    self.update_conditions(conditions,numsteps,ii,dt)
                 #check to see if there is a final position step
                 if jj < len(b):
                     #update positions and orientations
