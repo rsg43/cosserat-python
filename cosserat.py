@@ -38,6 +38,10 @@ class CosseratRod:
         self.B = np.diag(np.array([39000.0, 39000.0, 13000.0])) / 4.114
         self.S = np.diag(np.array([16000.0, 16000.0, 34000.0])) / 4.114
         
+        #external forces
+        self.ext_F = np.zeros((3,self.N+1))
+        self.ext_C = np.zeros((3,self.N))
+
     def expm(self,w,theta):
         u = np.copy(w)
         #find norm of velocity vector u
@@ -135,7 +139,7 @@ class CosseratRod:
         #update orientations using rotation matrices
         self.Q = np.einsum('ijk,jlk->ilk',temp_expm,self.Q)
 
-    def update_acceleration(self,ext_F,ext_C):
+    def update_acceleration(self):
         #update sigma and kappa
         self.update_sigma()
         self.update_kappa()
@@ -144,7 +148,7 @@ class CosseratRod:
         #take strain to laboratory frame
         Qn_temp = np.einsum('jik,jk->ik',self.Q,n_temp) / self.e 
         #update dvdt
-        self.dvdt = (self.diff(Qn_temp) + ext_F) / self.m
+        self.dvdt = (self.diff(Qn_temp) + self.ext_F) / self.m
         #calculate bend/twist strain
         tau_temp = np.einsum('ij,j...->i...', self.B, self.kappa) / np.power(self.ee,3)
         kappa_temp = np.cross(self.kappa, tau_temp, axisa=0, axisb=0, axisc=0) * self.D_0
@@ -158,7 +162,7 @@ class CosseratRod:
         #calculate dilatation term
         dilatation_temp *= self.e_v / self.e
         #update dwdt
-        self.dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + ext_C
+        self.dwdt = self.diff(tau_temp) + self.quad(kappa_temp) + shear_temp + dilatation_temp + rigid_temp + self.ext_C
         self.dwdt *= np.tile(self.e,(3,1)) / np.einsum('ij->ji',np.tile(np.diag(self.I),(10,1)))
 
     def update_conditions(self,conditions,numsteps,ii,dt):
@@ -193,14 +197,24 @@ class CosseratRod:
             self.w[:,self.N-1] = np.zeros((3,))
             if ii < numsteps // 10:
                 self.w[2,self.N-1] += -1.0 * 10 / (numsteps * dt)
+        #add noise to simulations
+        if 'noise_no_ext' in conditions:
+            force_scale = 0.01
+            self.ext_F = np.random.normal(size=(3,self.N+1)) * force_scale
+            self.ext_C = np.random.normal(size=(3,self.N)) * force_scale
+
 
 
     def symplectic(self,timespan=100,dt=0.01,method='PEFRL',ext_F=None,ext_C=None,dissipation=0,conditions=[]):
         #Check to see if there are any external forces acting on filament, else use zero arrays
         if isinstance(ext_F,np.ndarray) == False:
-            ext_F = np.zeros((3,self.N+1))
+            self.ext_F = np.zeros((3,self.N+1))
+        else:
+            self.ext_F = ext_F
         if isinstance(ext_C,np.ndarray) == False:
-            ext_C = np.zeros((3,self.N))
+            self.ext_C = np.zeros((3,self.N))
+        else:
+            self.ext_C = ext_C
 
         #Set integrating method as position extended Forrest-Ruth like   
         if method == 'PEFRL':
@@ -230,7 +244,7 @@ class CosseratRod:
                 #check to see if there is a first velocity step
                 if a[jj] != 0:
                     #update accelerations
-                    self.update_acceleration(ext_F,ext_C)
+                    self.update_acceleration()
                     #update velocities
                     self.update_v(a[jj] * dt, dissipation)
                     self.update_w(a[jj] * dt, dissipation)
