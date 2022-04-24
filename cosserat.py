@@ -16,7 +16,7 @@ class CosseratRod:
         self.v = np.zeros((3,self.N+1))
         self.Q = np.zeros((3,3,self.N))
         for ii in range(self.N):
-            self.Q[:,:,ii] = np.identity(3)
+            self.Q[:,:,ii] = np.array([[1,0,0],[0,1,0],[0,0,1]])
         self.w = np.zeros((3,self.N))
         self.kappa = np.zeros((3,self.N-1))
         self.sigma = np.zeros((3,self.N))
@@ -51,17 +51,15 @@ class CosseratRod:
             #scale rotation angle by scalar velocity
             theta *= u_norm
             #implement Rodrigues formula
-            return np.identity(3) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
+            return np.array([[1,0,0],[0,1,0],[0,0,1]]) + np.sin(theta) * U + (1 - np.cos(theta)) * np.einsum('ij,jk->ik',U, U)
         else:
             #if velocity is zero, no change in orientation
-            return np.identity(3)
+            return np.array([[1,0,0],[0,1,0],[0,0,1]])
     
     def logm(self,RR):
         R = np.copy(RR)
-        #find interval via trace of R matrix
-        interval = 0.5 * (np.einsum('ii',R)-1.0)
-        #take arccos of interval to get angle 
-        theta = np.arccos(interval - 1e-10)
+        #take arccos of interval (trace) to get angle theta
+        theta = np.arccos(0.5 * (np.einsum('ii',R)-1.0) - 1e-10)
         #find different between R and R^T
         skew = R - np.einsum('ij->ji',R)
         #apply skew operator to convert antisym matrix to vector
