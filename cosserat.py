@@ -41,7 +41,7 @@ class CosseratRod:
     def expm(self,w,theta):
         u = np.copy(w)
         #find norm of velocity vector u
-        u_norm = np.linalg.norm(u)
+        u_norm = np.sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2])
         #check to see if velocity is close to zero
         if u_norm > 1e-14:
             #normalise velocity
@@ -119,7 +119,7 @@ class CosseratRod:
         #update segment length vector
         self.l = self.x[:,1:] - self.x[:,:self.N]
         #calculate current segment length
-        self.l_norm = np.linalg.norm(self.l,axis=0)
+        self.l_norm = np.sqrt(np.einsum('ij,ij->j',self.l, self.l))
         #calculate current Voronoi region length
         self.D = 0.5 * (self.l_norm[1:] + self.l_norm[:self.N-1])
         #calculate segment extension
