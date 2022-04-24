@@ -3,9 +3,12 @@ Python implemenation of the Cosserat rod model, based on work by Gazzola et al.,
 
 Only package dependency for main class is numpy, with remaining functions and operators included in class.
 
-Planned Functionality updates:
+Completed Functionality updates:
 - External forces
 - Clamped filament segments
+
+Planned Functionality updates:
+- Visualisation code
 - Dynamically clamped segments
 - Cross-linked filaments
 - Volume exclusion
