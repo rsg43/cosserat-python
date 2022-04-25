@@ -11,7 +11,7 @@ plotter = CosseratVisualisation(filament)
 #set conditions for simulations
 conditions = ['comp_clamp_0','comp_clamp_N','twist_clamp_0','twist_clamp_N','noise_no_ext']
 #simulate filament using sympletic, with clamped end and dissipation
-filament.symplectic(timespan=100,conditions=conditions,dissipation=1)
+filament.symplectic(timespan=50,conditions=conditions,dissipation=1)
 #print position of filament after simulation
 print(filament.x)
 print('====x=====')
