@@ -6,8 +6,22 @@ class CosseratMultipleFilament:
 		self.filaments = filaments
 		self.num_filaments = len(filaments)
 
-	def linkers(self):
+	def linkers_setup(self,links):
+		self.linker_length = 5
+		self.linker_stiffness = 100
+		self.links = links
+
+		for i in links:
+			if i[0][0] >= self.num_filaments \
+			and i[1][0] >= self.num_filaments \
+			and i[0][1] >= self.filament[i[0][0]].N \
+			and i[1][1] >= self.filament[i[1][0]].N:
+				raise ValueError(f'{i} is an invalid bond')
+
+
+	def linkers_force(self):
 		pass
+
 
 	def symplectic(self,timespan=10,dt=0.01,method='PEFRL',dissipation=0,conditions=[]):
 		#Set integrating method as position extended Forrest-Ruth like   
@@ -28,7 +42,8 @@ class CosseratMultipleFilament:
 		#Raise error if method not recognised
 		else:
 		    raise ValueError('Incompatible integrator specified')
-
+		
+		self.linkers_force()
 		#Set number of steps in simulation
 		numsteps = int(timespan / dt)
 		#Run simulation loop
@@ -37,7 +52,7 @@ class CosseratMultipleFilament:
 			for jj in range(max(len(a),len(b))):
                 #check to see if there is a first velocity step
 				if a[jj] != 0:
-					self.linkers()
+					self.linkers_force()
 					for nn in range(self.num_filaments):
 	                    #update accelerations
 						self.filaments[nn].update_acceleration()
