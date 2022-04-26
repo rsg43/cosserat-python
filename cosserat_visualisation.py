@@ -22,18 +22,21 @@ class CosseratVisualisation:
 		ax.set_zlim(self.box_size_z)
 		plt.show()
 
-	def cylinder_coords(self,radius,length,orientation):
-		# z = np.linspace(0, height_z, 50)
-	 #    theta = np.linspace(0, 2*np.pi, 50)
-	 #    theta_grid, z_grid=np.meshgrid(theta, z)
-	 #    x_grid = radius*np.cos(theta_grid) + center_x
-	 #    y_grid = radius*np.sin(theta_grid) + center_y
-	 #    return x_grid,y_grid,z_grid
-		pass
+	def cylinder_coords(self,radius,length,orientation,CoM):
+		z = np.linspace(-0.5 * length, 0.5 * length, 100)
+		theta = np.linspace(0, 2*np.pi, 100)
+		theta_grid, z_grid=np.meshgrid(theta, z)
+		x_grid = radius*np.cos(theta_grid)
+		y_grid = radius*np.sin(theta_grid)
+		x_grid += CoM[0]
+		y_grid += CoM[1]
+		z_grid += CoM[2]
+		return x_grid, y_grid, z_grid
 
 	def cylinder_plot(self):
-		pass
+		radius = np.sqrt(self.filament.A)
+		length = 1
 
-
+		x_grid, y_grid, z_grid = cylinder_coords(radius,length,orientation,CoM)
 
 
