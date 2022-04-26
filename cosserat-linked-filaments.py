@@ -12,3 +12,6 @@ links = [[[0,0],[1,3]],[[1,7],[2,5]],[[2,3],[0,4]],[[1,9],[0,8]],[[2,7],[0,5]]]
 
 filament_store = CosseratMultipleFilament(filaments)
 filament_store.symplectic(links=links)
+
+plotter = CosseratVisualisation(filaments[0])
+plotter.simple_lineplot()

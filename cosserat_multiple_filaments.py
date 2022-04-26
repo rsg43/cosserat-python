@@ -11,17 +11,22 @@ class CosseratMultipleFilament:
 		self.linker_stiffness = 100
 		self.links = links
 
-		for i in links:
-			if i[0][0] >= self.num_filaments \
-			and i[1][0] >= self.num_filaments \
-			and i[0][1] >= self.filament[i[0][0]].N \
-			and i[1][1] >= self.filament[i[1][0]].N:
+		for link in links:
+			if link[0][0] >= self.num_filaments \
+			and link[1][0] >= self.num_filaments \
+			and link[0][1] >= self.filaments[link[0][0]].N \
+			and link[1][1] >= self.filaments[link[1][0]].N:
 				raise ValueError(f'{i} is an invalid bond')
 
 	def linkers_force(self):
-		pass
+		for link in self.links:
+			x0 = np.copy(self.filaments[link[0][0]].x[:,link[0][1]])
+			x1 = np.copy(self.filaments[link[1][0]].x[:,link[1][1]])
+			f = self.linker_stiffness * (x1 - x0) * (1 - np.sqrt(np.einsum('i,i->',x1 - x0,x1 - x0)) / self.linker_length)
+			self.filaments[link[0][0]].ext_F[:,link[0][1]] = -f
+			self.filaments[link[1][0]].ext_F[:,link[1][1]] = f
 
-	def symplectic(self,timespan=10,dt=0.01,method='PEFRL',dissipation=0,conditions=[],links=None):
+	def symplectic(self,timespan=50,dt=0.01,method='PEFRL',dissipation=0,conditions=[],links=None):
 		#Set integrating method as position extended Forrest-Ruth like   
 		if method == 'PEFRL':
 		    xi = 0.1786178958448091
