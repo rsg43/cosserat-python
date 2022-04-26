@@ -42,7 +42,7 @@ class CosseratMultipleFilament:
 		    raise ValueError('Incompatible integrator specified')
 		
 		if isinstance(links, list):
-			self.linkers_force()
+			self.linkers_setup(links)
 		#Set number of steps in simulation
 		numsteps = int(timespan / dt)
 		#Run simulation loop
@@ -68,12 +68,3 @@ class CosseratMultipleFilament:
 						self.filaments[nn].update_x(b[jj] * dt)
 						self.filaments[nn].update_Q(b[jj] * dt)
 
-
-num_fils = 5
-filaments = [None] * num_fils
-for ii in range(num_fils):
-	filaments[ii] = CosseratRod()
-
-
-filament_store = CosseratMultipleFilament(filaments)
-filament_store.symplectic()
