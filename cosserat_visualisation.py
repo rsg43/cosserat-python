@@ -34,9 +34,10 @@ class CosseratVisualisation:
 		return x_grid, y_grid, z_grid
 
 	def cylinder_plot(self):
-		radius = np.sqrt(self.filament.A)
-		length = 1
-
-		x_grid, y_grid, z_grid = cylinder_coords(radius,length,orientation,CoM)
+		for ii in self.filament.N:
+			radius = np.sqrt(self.filament.A)
+			length = self.filament.l_norm[ii]
+			orientation = self.filament.Q[:,:,ii]
+			x_grid, y_grid, z_grid = cylinder_coords(radius,length,orientation,CoM)
 
 
