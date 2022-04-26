@@ -14,6 +14,6 @@ conditions = ['comp_clamp_0','comp_clamp_N','twist_clamp_0','twist_clamp_N','noi
 filament.symplectic(timespan=50,conditions=conditions,dissipation=1)
 #print position of filament after simulation
 print(filament.x)
-print('====x=====')
+print('=====x=====')
 #make simple lineplot of filament centreline
 plotter.simple_lineplot()
