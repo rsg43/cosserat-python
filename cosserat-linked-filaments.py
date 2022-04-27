@@ -18,3 +18,7 @@ print(filaments[1].x)
 
 plotter = CosseratVisualisation(filaments[0])
 plotter.simple_lineplot()
+plotter = CosseratVisualisation(filaments[1])
+plotter.simple_lineplot()
+plotter = CosseratVisualisation(filaments[2])
+plotter.simple_lineplot()
