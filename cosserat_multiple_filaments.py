@@ -19,12 +19,15 @@ class CosseratMultipleFilament:
 				raise ValueError(f'{i} is an invalid bond')
 
 	def linkers_force(self):
+		for nn in range(self.num_filaments):
+			force_scale = 0.01
+			self.filaments[nn].ext_F = np.random.normal(size=(3,self.filaments[nn].N+1)) * force_scale
 		for link in self.links:
 			x0 = np.copy(self.filaments[link[0][0]].x[:,link[0][1]])
 			x1 = np.copy(self.filaments[link[1][0]].x[:,link[1][1]])
-			f = self.linker_stiffness * (x1 - x0) * (1 - np.sqrt(np.einsum('i,i->',x1 - x0,x1 - x0)) / self.linker_length)
-			self.filaments[link[0][0]].ext_F[:,link[0][1]] = -f
-			self.filaments[link[1][0]].ext_F[:,link[1][1]] = f
+			f = self.linker_stiffness * (x1 - x0) * (1 - self.linker_length / np.sqrt(np.einsum('i,i->',x1 - x0,x1 - x0)))
+			self.filaments[link[0][0]].ext_F[:,link[0][1]] = f
+			self.filaments[link[1][0]].ext_F[:,link[1][1]] = -f
 
 	def symplectic(self,timespan=50,dt=0.01,method='PEFRL',dissipation=0,conditions=[],links=None):
 		#Set integrating method as position extended Forrest-Ruth like   
