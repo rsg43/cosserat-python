@@ -12,9 +12,9 @@ jobs:
         uses: appleboy/scp-action@master
         env:
           USERNAME: ${{ secrets.USERNAME }}
-          HOST: ${{ secrets.HOST }}
-          KEY: ${{ secrets.SSH_KEY }}
+          HOST: ${{ secrets.HOST_LIELL }}
+          KEY: ${{ secrets.SSH_KEY_LIELL }}
           PORT: ${{ secrets.PORT }}
         with:
           source: '.'
-          target: '/home/ubuntu/acm/'
+          target: '/home/ubuntu/test_repo/'
