@@ -12,8 +12,8 @@ jobs:
         uses: appleboy/scp-action@master
         env:
           USERNAME: ${{ secrets.USERNAME }}
-          HOST: ${{ secrets.HOST_LIELL }}
-          KEY: ${{ secrets.SSH_KEY_LIELL }}
+          HOST: ${{ secrets.HOST }}
+          KEY: ${{ secrets.SSH_KEY }}
           PORT: ${{ secrets.PORT }}
         with:
           source: '.'
