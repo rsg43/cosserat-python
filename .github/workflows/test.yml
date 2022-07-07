@@ -13,7 +13,7 @@ jobs:
         env:
           USERNAME: ${{ secrets.USERNAME }}
           HOST: ${{ secrets.HOST }}
-          KEY: ${{ secrets.SSH_DEPLOYMENT_KEY }}
+          KEY: ${{ secrets.SSH_KEY }}
         with:
           source: '.'
           target: '/home/ubuntu/acm/'
