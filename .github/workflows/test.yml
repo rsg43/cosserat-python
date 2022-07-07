@@ -17,6 +17,3 @@ jobs:
         with:
           source: '.'
           target: '/home/ubuntu/acm/'
-
-
-- uses: actions/checkout@v3
