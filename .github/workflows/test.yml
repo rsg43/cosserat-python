@@ -9,11 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@main
       - name: copy file via ssh key
-        uses: rsg43/scp-action@main
+        uses: appleboy/scp-action@master
         env:
           USERNAME: ${{ secrets.USERNAME }}
           HOST: ${{ secrets.HOST }}
           KEY: ${{ secrets.SSH_DEPLOYMENT_KEY }}
         with:
-          source: './*'
+          source: '.'
           target: '/home/ubuntu/acm/'
+
+
+- uses: actions/checkout@v3
